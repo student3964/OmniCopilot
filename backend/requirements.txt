@@ -1,0 +1,63 @@
+# FastAPI
+fastapi
+uvicorn[standard]
+python-multipart
+sse-starlette
+
+# LangChain / LangGraph (Removed strict version pins for Python 3.13 compatibility)
+langchain
+numpy>=2.0.0
+langchain-core
+langchain-groq
+langchain-openai
+langchain-google-genai
+langgraph
+aiohttp
+
+# LLM Providers
+groq
+openai
+google-generativeai
+
+# Database
+sqlalchemy[asyncio]
+asyncpg
+alembic
+psycopg2-binary
+
+# Auth & Utilities
+python-jose[cryptography]
+passlib[bcrypt]
+httpx
+authlib
+
+# Google API
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
+
+# Slack API
+slack-sdk
+
+# Notion API
+notion-client
+
+# Pydantic & Core
+pydantic
+pydantic-settings
+email-validator
+python-dotenv
+tenacity
+python-dateutil
+dateparser
+
+# Logging
+structlog
+rich
+
+# Testing
+pytest
+pytest-asyncio
+# Local File Parsing
+pypdf
