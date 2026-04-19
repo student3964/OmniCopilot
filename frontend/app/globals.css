@@ -13,15 +13,15 @@
   --link-green: #10b981;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0d1117;
-    --foreground: #ededed;
-    --bubble-user: #3b82f6;
-    --bubble-ai: #161b22;
-    --bubble-ai-text: #f9fafb;
-    --bubble-ai-border: #30363d;
-  }
+@custom-variant dark (&:is(.dark, .dark *));
+
+.dark {
+  --background: #0d1117;
+  --foreground: #ededed;
+  --bubble-user: #3b82f6;
+  --bubble-ai: #161b22;
+  --bubble-ai-text: #f9fafb;
+  --bubble-ai-border: #30363d;
 }
 
 @layer base {
@@ -78,3 +78,20 @@ body {
     to { opacity: 1; transform: translateY(0); }
   }
 }
+
+/* Glassy Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.3); /* Gray-400 with 30% opacity */
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.5); /* Increase opacity on hover */
+}
+

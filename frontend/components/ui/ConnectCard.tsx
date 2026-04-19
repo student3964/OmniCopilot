@@ -25,7 +25,7 @@ export const ConnectCard: React.FC<ConnectCardProps> = ({ provider, connected, o
   const displayName = provider.charAt(0).toUpperCase() + provider.slice(1);
 
   return (
-    <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-sm">
+    <div className="flex items-center justify-between p-3 bg-white/40 dark:bg-gray-800/40 backdrop-blur-md border border-gray-200/50 dark:border-gray-700/50 rounded-xl shadow-sm hover:shadow-lg hover:-translate-y-0.5 hover:bg-white/80 dark:hover:bg-gray-700/80 hover:border-blue-300 dark:hover:border-blue-500/50 transition-all duration-300">
       <div className="flex items-center gap-3">
          <span className="font-semibold text-gray-700 dark:text-gray-300">
            {logos[provider] || displayName}

@@ -27,7 +27,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectConversation,
   activeConversationId 
 }) => {
-  const [integrations, setIntegrations] = useState<IntegrationStatus[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [sidebarWidth, setSidebarWidth] = useState(256); // default 256px (w-64)
@@ -61,14 +60,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     window.addEventListener("mouseup", onMouseUp);
   }, []);
 
-  const fetchIntegrations = async () => {
-    try {
-      const data = await fetchApi<{ integrations: IntegrationStatus[] }>("/api/integrations/status");
-      setIntegrations(data.integrations);
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
   const fetchConversations = async () => {
     try {
@@ -122,26 +113,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   useEffect(() => {
-    Promise.all([fetchIntegrations(), fetchConversations()]);
+    fetchConversations();
   }, []);
-
-  const handleDisconnect = async (provider: string) => {
-    if(!confirm(`Are you sure you want to disconnect ${provider}?`)) return;
-    try {
-      await fetchApi(`/api/integrations/${provider}`, { method: "DELETE" });
-      await fetchIntegrations();
-    } catch (e) {
-      alert("Failed to disconnect");
-    }
-  };
 
   return (
     <div
-      className="h-full bg-gray-50/50 dark:bg-gray-900/50 border-r border-gray-200 dark:border-gray-800 p-4 flex flex-col relative flex-shrink-0"
+      className="h-full bg-gradient-to-b from-gray-50/80 to-white/50 dark:from-gray-900/80 dark:to-black/50 backdrop-blur-xl border-r border-gray-200/50 dark:border-white/5 p-4 flex flex-col relative flex-shrink-0"
       style={{ width: `${sidebarWidth}px` }}
     >
       <div className="mb-8">
-        <h1 className="text-xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-1">
+        <h1 className="text-xl font-black bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent mb-1">
           Omni Copilot
         </h1>
         <p className="text-xs text-gray-500 font-medium">Unified AI Assistant</p>
@@ -215,28 +196,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             ))}
           </div>
-        </div>
-
-        {/* Integrations Section */}
-        <div>
-          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 px-1">Integrations</h3>
-          
-          {loading ? (
-            <div className="animate-pulse space-y-3">
-              {[1, 2].map(i => <div key={i} className="h-10 bg-gray-200 dark:bg-gray-800 rounded-lg"></div>)}
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {integrations.map(auth => (
-                <ConnectCard 
-                  key={auth.provider}
-                  provider={auth.provider}
-                  connected={auth.connected}
-                  onDisconnect={handleDisconnect}
-                />
-              ))}
-            </div>
-          )}
         </div>
       </div>
       
