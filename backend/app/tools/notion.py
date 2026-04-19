@@ -85,7 +85,7 @@ def _format_page(page: dict) -> dict:
 
 async def search_notion(
     access_token: str,
-    query: str,
+    query: str = "",
     filter_type: Optional[str] = None,
     page_size: int = 10,
     num_pages: Optional[int] = None,  # Alias
@@ -251,7 +251,7 @@ NOTION_TOOLS_SCHEMA = [
                 "filter_type": {"type": "string", "description": "Filter to 'page' or 'database' (optional)."},
                 "page_size": {"type": "integer", "description": "Number of results. Default 10.", "default": 10},
             },
-            "required": ["query"],
+            "required": [],
         },
     },
     {

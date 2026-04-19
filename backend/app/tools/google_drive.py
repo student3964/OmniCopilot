@@ -59,9 +59,22 @@ async def get_drive_files(
             pageSize=max_results,
             fields="files(id, name, mimeType, modifiedTime, webViewLink, size, owners)",
             orderBy="modifiedTime desc",
+            supportsAllDrives=True,
+            includeItemsFromAllDrives=True,
         ).execute()
 
         files = result.get("files", [])
+        
+        # Resilient fallback for personal accounts that might return empty with allDrives flags
+        if not files:
+            logger.info("drive_files_fallback_search")
+            result = service.files().list(
+                q=full_query,
+                pageSize=max_results,
+                fields="files(id, name, mimeType, modifiedTime, webViewLink, size, owners)",
+                orderBy="modifiedTime desc",
+            ).execute()
+            files = result.get("files", [])
         logger.info("drive_files_fetched", count=len(files))
 
         return {
@@ -86,7 +99,7 @@ async def get_drive_files(
 
 async def search_drive_files(
     access_token: str,
-    search_term: str,
+    search_term: str = "",
     max_results: int = 5,
     num_files: Optional[int] = None,  # Alias
     **kwargs: Any,

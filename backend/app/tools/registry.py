@@ -108,12 +108,9 @@ TOOL_PROVIDER_MAP: Dict[str, str] = {
 # ═══════════════════════════════════════════════════════════════
 
 SENSITIVE_TOOLS = {
-    "send_email",
-    "create_calendar_event",
     "delete_calendar_event",
     "send_slack_message",
     "create_notion_page",
-    "create_zoom_meeting",
     "upload_to_drive",
 }
 

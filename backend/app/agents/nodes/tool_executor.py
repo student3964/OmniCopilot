@@ -12,8 +12,35 @@ from app.agents.state import AgentState, ToolCall
 from app.tools.registry import get_tool_fn, get_provider_for_tool
 from app.services.token_service import get_valid_token
 from app.core.logging import get_logger
+import inspect
 
 logger = get_logger(__name__)
+
+
+def filter_tool_args(func, args_dict: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Filter the args_dict to include only arguments that the function accepts.
+    Prevents 'unexpected keyword argument' errors.
+    """
+    sig = inspect.signature(func)
+    valid_params = sig.parameters.keys()
+    
+    # If function has **kwargs, it accepts everything
+    has_kwargs = any(
+        p.kind == inspect.Parameter.VAR_KEYWORD 
+        for p in sig.parameters.values()
+    )
+    if has_kwargs:
+        return args_dict
+        
+    filtered = {k: v for k, v in args_dict.items() if k in valid_params}
+    
+    # Log if we had to strip anything for debugging
+    stripped = set(args_dict.keys()) - set(filtered.keys())
+    if stripped:
+        logger.warning("tool_executor_args_stripped", tool=func.__name__, stripped=list(stripped))
+        
+    return filtered
 
 
 async def tool_executor_node(state: AgentState, db: AsyncSession) -> AgentState:
@@ -68,7 +95,10 @@ async def tool_executor_node(state: AgentState, db: AsyncSession) -> AgentState:
         if access_token:
             kwargs["access_token"] = access_token
 
-        result = await tool_fn(**kwargs)
+        # SAFETY SHIELD: Filter out unexpected keyword arguments
+        filtered_kwargs = filter_tool_args(tool_fn, kwargs)
+        
+        result = await tool_fn(**filtered_kwargs)
 
         tool_call = {**tool_call, "status": "success", "tool_output": result}
         logger.info("tool_executor_success", tool=tool_name)

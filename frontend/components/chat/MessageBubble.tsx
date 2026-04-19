@@ -1,4 +1,6 @@
 import React from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { MessageRole, ToolCallState } from "../../hooks/useChat";
 import { ToolStepCard } from "./ToolStepCard";
 
@@ -29,7 +31,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ role, content, too
   }
 
   return (
-    <div className={`flex w-full ${isUser ? "justify-end" : "justify-start"} mb-6`}>
+    <div className={`flex w-full ${isUser ? "justify-end" : "justify-start"} mb-6 animate-in slide-in-from-bottom-2 duration-300`}>
       <div className={`flex flex-col gap-2 max-w-[85%] ${isUser ? "items-end" : "items-start"}`}>
         
         {/* Assistant Tool Calls */}
@@ -44,13 +46,19 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ role, content, too
         {/* Message Bubble */}
         {(content || (isUser)) && (
           <div
-            className={`px-5 py-3 rounded-2xl shadow-sm border whitespace-pre-wrap text-[15px] leading-relaxed 
+            className={`px-5 py-3 rounded-2xl shadow-sm border text-[15px] leading-relaxed prose dark:prose-invert
               ${isUser 
-                ? "bg-blue-600 text-white rounded-br-sm border-transparent" 
+                ? "bg-blue-600 text-white rounded-br-sm border-transparent prose-p:text-white prose-headings:text-white" 
                 : "bg-white text-gray-800 rounded-bl-sm border-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700"
               }`}
           >
-            {content}
+            {isUser ? (
+              <div className="whitespace-pre-wrap">{content}</div>
+            ) : (
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {content}
+              </ReactMarkdown>
+            )}
           </div>
         )}
       </div>

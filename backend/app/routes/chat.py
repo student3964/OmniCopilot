@@ -23,6 +23,7 @@ from app.agents.graph import run_agent
 from app.services.chat_service import (
     get_or_create_conversation, get_conversation_history,
     save_message, update_conversation_title, list_conversations,
+    rename_conversation,
 )
 from app.routes.auth import get_current_user
 from app.core.logging import get_logger
@@ -94,6 +95,8 @@ async def chat(
                 confirm_id=body.confirm_id,
                 confirmed_tool_name=_pending_tool_calls.get(body.confirm_id, {}).get("tool_name") if body.confirmed else None,
                 confirmed_tool_input=_pending_tool_calls.get(body.confirm_id, {}).get("tool_input") if body.confirmed else None,
+                plan=_pending_tool_calls.get(body.confirm_id, {}).get("plan", []) if body.confirmed else None,
+                current_step_index=_pending_tool_calls.get(body.confirm_id, {}).get("current_step_index", 0) if body.confirmed else 0,
             ):
                 event_type = event.get("event", "")
                 event_data = event.get("data", {})
@@ -118,6 +121,8 @@ async def chat(
                     _pending_tool_calls[confirm_id] = {
                         "tool_name": event_data.get("tool_name"),
                         "tool_input": event_data.get("tool_input"),
+                        "plan": event_data.get("plan", []),
+                        "current_step_index": event_data.get("current_step_index", 0),
                     }
 
                 # Stream event to client
@@ -213,3 +218,19 @@ async def delete_conv(
     if not deleted:
         raise HTTPException(status_code=404, detail="Conversation not found")
     return SuccessResponse(message="Conversation deleted")
+
+
+from app.models.schemas import ConversationUpdate
+
+@router.patch("/conversations/{conversation_id}", response_model=SuccessResponse)
+async def rename_conv(
+    conversation_id: uuid.UUID,
+    body: ConversationUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Manually rename a conversation."""
+    success = await rename_conversation(db, current_user.id, conversation_id, body.title)
+    if not success:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    return SuccessResponse(message="Conversation renamed")

@@ -60,6 +60,7 @@ def _parse_message(msg: dict) -> dict:
         "date": headers.get("date", ""),
         "snippet": msg.get("snippet", ""),
         "body": body[:15000] if body else msg.get("snippet", ""),  # cap body length
+        "gmail_url": f"https://mail.google.com/mail/u/0/#inbox/{msg['id']}"
     }
 
 

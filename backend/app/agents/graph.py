@@ -81,6 +81,8 @@ async def run_agent(
     confirm_id: Optional[str] = None,
     confirmed_tool_name: Optional[str] = None,
     confirmed_tool_input: Optional[dict] = None,
+    plan: Optional[list] = None,
+    current_step_index: int = 0,
 ) -> AsyncGenerator[Dict[str, Any], None]:
     """
     Run the agent graph and yield SSE events as they are produced.
@@ -93,8 +95,8 @@ async def run_agent(
         "conversation_id": conversation_id,
         "user_query": user_query,
         "chat_history": chat_history,
-        "plan": [],
-        "current_step_index": 0,
+        "plan": plan or [],
+        "current_step_index": current_step_index,
         "pending_tool_calls": [],
         "completed_tool_calls": [],
         "tool_results_summary": "",

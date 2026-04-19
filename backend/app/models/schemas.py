@@ -98,6 +98,11 @@ class ConversationWithMessages(ConversationRead):
     messages: List[MessageRead] = Field(default_factory=list)
 
 
+class ConversationUpdate(BaseModel):
+    """Used for manual renaming of a conversation."""
+    title: str = Field(..., min_length=1, max_length=500)
+
+
 # ═══════════════════════════════════════════════════════════════
 # SSE Event Schemas (streamed to frontend)
 # ═══════════════════════════════════════════════════════════════

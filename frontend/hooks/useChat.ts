@@ -270,14 +270,19 @@ export function useChat(conversationId?: string) {
         formData.append("conversation_id", currentConvId);
       }
 
-      await fetchApi<any>("/api/chat/upload", {
+      const result = await fetchApi<any>("/api/chat/upload", {
         method: "POST",
         body: formData
       });
 
-      // The backend now persists this to the DB history.
-      // We don't need to add it locally anymore as the next chat call
-      // will see it in the DB context.
+      // The backend now persists this to the DB history and returns the conversation_id.
+      // Sync the state and refresh the view.
+      if (result.conversation_id) {
+        if (!currentConvId) {
+          setCurrentConvId(result.conversation_id);
+        }
+        await loadConversation(result.conversation_id);
+      }
       return true;
     } catch (err: any) {
       setError("Failed to upload file: " + err.message);

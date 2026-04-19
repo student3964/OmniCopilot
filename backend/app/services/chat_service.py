@@ -94,6 +94,28 @@ async def update_conversation_title(
         await db.commit()
 
 
+async def rename_conversation(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    conversation_id: uuid.UUID,
+    new_title: str,
+) -> bool:
+    """Manually update the title of a conversation."""
+    result = await db.execute(
+        select(Conversation).where(
+            Conversation.id == conversation_id,
+            Conversation.user_id == user_id
+        )
+    )
+    conv = result.scalar_one_or_none()
+    if conv:
+        conv.title = new_title[:500]
+        await db.commit()
+        logger.info("conversation_renamed", conversation_id=str(conversation_id), title=new_title)
+        return True
+    return False
+
+
 async def list_conversations(
     db: AsyncSession,
     user_id: uuid.UUID,

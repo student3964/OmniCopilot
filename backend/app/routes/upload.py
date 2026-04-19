@@ -6,8 +6,11 @@ import io
 from pypdf import PdfReader
 from app.routes.auth import get_current_user
 from app.models.db import User, get_db
-from app.services.chat_service import save_message
+from app.services.chat_service import save_message, get_or_create_conversation
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/api/chat", tags=["upload"])
 
@@ -59,26 +62,34 @@ async def upload_file(
             file_type = "binary"
             content = f"[Binary file: {filename}]"
 
-        # 3. Persist to DB if conversation context exists
-        if conversation_id:
-            try:
-                conv_uuid = uuid.UUID(conversation_id)
-                await save_message(
-                    db=db,
-                    conversation_id=conv_uuid,
-                    role="system",
-                    content=f"Uploaded file: {filename}\nLocal Path: {local_path}\n\n[FILE CONTENT]:\n{content[:10000]}"
-                )
-                logger.info("upload_persisted_to_db", conversation_id=conversation_id, filename=filename)
-            except Exception as e:
-                logger.error("upload_persistence_error", error=str(e))
+        # 3. Persist to DB
+        try:
+            conv_id_to_use = None
+            if conversation_id:
+                conv_id_to_use = uuid.UUID(conversation_id)
+            else:
+                # Auto-create conversation if missing
+                conv = await get_or_create_conversation(db, current_user.id)
+                conv_id_to_use = conv.id
+            
+            await save_message(
+                db=db,
+                conversation_id=conv_id_to_use,
+                role="system",
+                content=f"Uploaded file: {filename}\nLocal Path: {local_path}\n\n[FILE CONTENT]:\n{content[:10000]}"
+            )
+            logger.info("upload_persisted_to_db", conversation_id=str(conv_id_to_use), filename=filename)
+            conversation_id = str(conv_id_to_use)
+        except Exception as e:
+            logger.error("upload_persistence_error", error=str(e))
 
         return {
             "filename": filename,
             "content": content,
             "type": file_type,
             "char_count": len(content),
-            "local_path": local_path
+            "local_path": local_path,
+            "conversation_id": conversation_id
         }
 
     except Exception as e:

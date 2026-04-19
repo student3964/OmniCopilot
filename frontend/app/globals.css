@@ -3,24 +3,52 @@
 
 /* Modern, vibrant aesthetic */
 :root {
-  --background: #ffffff;
+  --background: #fdfdfe;
   --foreground: #171717;
   --bubble-user: #2563eb;
   --bubble-user-text: #ffffff;
   --bubble-ai: #ffffff;
   --bubble-ai-text: #1f2937;
   --bubble-ai-border: #e5e7eb;
+  --link-green: #10b981;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background: #0d1117;
     --foreground: #ededed;
     --bubble-user: #3b82f6;
-    --bubble-ai: #1f2937;
+    --bubble-ai: #161b22;
     --bubble-ai-text: #f9fafb;
-    --bubble-ai-border: #374151;
+    --bubble-ai-border: #30363d;
   }
+}
+
+@layer base {
+  a {
+    @apply text-[var(--link-green)] font-bold decoration-2 underline-offset-4 hover:underline transition-all;
+  }
+}
+
+/* Premium Prose (Markdown) Formatting */
+.prose {
+  @apply max-w-none text-inherit;
+}
+
+.prose table {
+  @apply w-full border-collapse my-4 rounded-xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800;
+}
+
+.prose th {
+  @apply bg-gray-50 dark:bg-gray-800/50 px-4 py-2 text-left font-black uppercase tracking-wider text-[10px] text-gray-500;
+}
+
+.prose td {
+  @apply border-t border-gray-100 dark:border-gray-800 px-4 py-2 text-sm;
+}
+
+.chat-glass {
+  @apply bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border border-white/20 dark:border-gray-700/30 shadow-xl;
 }
 
 body {

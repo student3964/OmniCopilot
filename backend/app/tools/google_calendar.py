@@ -265,19 +265,19 @@ CALENDAR_TOOLS_SCHEMA = [
     },
     {
         "name": "create_calendar_event",
-        "description": "⚠️ SENSITIVE: Create a Google Calendar event. Used for creating Google Meet video conferences. Always confirm details with user first.",
+        "description": "⚠️ SENSITIVE: Create a Google Calendar event. Used for creating Google Meet video conferences. Always confirm details with user first. Supports relative date strings (e.g., 'tomorrow at 5pm', 'next Monday').",
         "parameters": {
             "type": "object",
             "properties": {
                 "summary": {"type": "string", "description": "Event title."},
-                "start_datetime": {"type": "string", "description": "ISO 8601 start datetime with timezone."},
-                "end_datetime": {"type": "string", "description": "ISO 8601 end datetime with timezone."},
+                "start_datetime": {"type": "string", "description": "ISO 8601 start datetime or relative string like 'tomorrow 9am'."},
+                "end_datetime": {"type": "string", "description": "Optional: ISO 8601 end datetime or relative string. Defaults to 1 hour after start if omitted."},
                 "description": {"type": "string", "description": "Event description (optional)."},
                 "location": {"type": "string", "description": "Location or meeting room (optional)."},
                 "attendees": {"type": "array", "items": {"type": "string"}, "description": "List of attendee emails."},
                 "add_meet_link": {"type": "boolean", "description": "Add Google Meet link. Default true.", "default": True},
             },
-            "required": ["summary", "start_datetime", "end_datetime"],
+            "required": ["summary", "start_datetime"],
         },
         "requires_confirmation": True,
     },

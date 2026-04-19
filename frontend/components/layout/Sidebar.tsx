@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { fetchApi } from "../../lib/api";
 import { ConnectCard } from "../ui/ConnectCard";
+import { Pencil, Trash2, Check, X, Plus } from "lucide-react";
 
 interface Conversation {
   id: string;
@@ -14,6 +15,13 @@ interface SidebarProps {
   activeConversationId?: string;
 }
 
+interface IntegrationStatus {
+  provider: string;
+  connected: bool;
+  scope?: string;
+  expires_at?: string;
+}
+
 export const Sidebar: React.FC<SidebarProps> = ({ 
   onNewChat, 
   onSelectConversation,
@@ -22,6 +30,36 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [integrations, setIntegrations] = useState<IntegrationStatus[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sidebarWidth, setSidebarWidth] = useState(256); // default 256px (w-64)
+  const isResizing = useRef(false);
+  
+  // Renaming state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+
+  const startResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isResizing.current = true;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isResizing.current) return;
+      const newWidth = Math.min(520, Math.max(180, e.clientX));
+      setSidebarWidth(newWidth);
+    };
+
+    const onMouseUp = () => {
+      isResizing.current = false;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  }, []);
 
   const fetchIntegrations = async () => {
     try {
@@ -58,6 +96,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
+  const startEditing = (e: React.MouseEvent, conversation: Conversation) => {
+    e.stopPropagation();
+    setEditingId(conversation.id);
+    setEditTitle(conversation.title || "");
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditTitle("");
+  };
+
+  const handleRename = async (id: string) => {
+    if (!editTitle.trim()) return;
+    try {
+      await fetchApi(`/api/chat/conversations/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ title: editTitle })
+      });
+      setEditingId(null);
+      await fetchConversations();
+    } catch (e) {
+      alert("Failed to rename chat");
+    }
+  };
+
   useEffect(() => {
     Promise.all([fetchIntegrations(), fetchConversations()]);
   }, []);
@@ -73,7 +136,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <div className="w-64 h-full bg-gray-50/50 dark:bg-gray-900/50 border-r border-gray-200 dark:border-gray-800 p-4 flex flex-col">
+    <div
+      className="h-full bg-gray-50/50 dark:bg-gray-900/50 border-r border-gray-200 dark:border-gray-800 p-4 flex flex-col relative flex-shrink-0"
+      style={{ width: `${sidebarWidth}px` }}
+    >
       <div className="mb-8">
         <h1 className="text-xl font-black bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-1">
           Omni Copilot
@@ -81,15 +147,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <p className="text-xs text-gray-500 font-medium">Unified AI Assistant</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-6">
+      <div className="flex-1 overflow-y-auto space-y-6 scrollbar-hide">
         {/* New Chat Button */}
         <button 
           onClick={onNewChat}
-          className="w-full py-3 px-4 rounded-xl border-2 border-dashed border-blue-500/30 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 text-blue-600 dark:text-blue-400 font-bold text-sm transition-all flex items-center justify-center gap-2"
+          className="w-full py-3 px-4 rounded-xl border-2 border-dashed border-blue-500/30 hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/10 text-blue-600 dark:text-blue-400 font-bold text-sm transition-all flex items-center justify-center gap-2 group"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
+          <Plus className="w-4 h-4 group-hover:scale-110 transition-transform" />
           New Chat
         </button>
 
@@ -102,25 +166,52 @@ export const Sidebar: React.FC<SidebarProps> = ({
             )}
             {conversations.map(conv => (
               <div key={conv.id} className="group relative">
-                <button
-                  onClick={() => onSelectConversation(conv.id)}
-                  className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all truncate pr-10 hover:bg-gray-100 dark:hover:bg-gray-800 ${
-                    activeConversationId === conv.id 
-                      ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-semibold ring-1 ring-blue-500/20" 
-                      : "text-gray-600 dark:text-gray-400"
-                  }`}
-                >
-                  {conv.title || "Untitled Chat"}
-                </button>
-                <button
-                  onClick={(e) => handleDelete(e, conv.id)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                  title="Delete chat"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                  </svg>
-                </button>
+                {editingId === conv.id ? (
+                  <div className="flex items-center gap-1 px-2 py-1.5 bg-white dark:bg-gray-800 rounded-lg ring-2 ring-blue-500/50">
+                    <input
+                      autoFocus
+                      className="bg-transparent border-none outline-none text-sm w-full"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleRename(conv.id)}
+                    />
+                    <button onClick={() => handleRename(conv.id)} className="p-1 text-green-500 hover:bg-green-50 rounded">
+                      <Check className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={cancelEditing} className="p-1 text-gray-400 hover:bg-gray-50 rounded">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => onSelectConversation(conv.id)}
+                      className={`w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all truncate pr-16 hover:bg-gray-100 dark:hover:bg-gray-800 ${
+                        activeConversationId === conv.id 
+                          ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-semibold ring-1 ring-blue-500/20" 
+                          : "text-gray-600 dark:text-gray-400"
+                      }`}
+                    >
+                      {conv.title || "Untitled Chat"}
+                    </button>
+                    <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-l from-gray-50 dark:from-gray-900 via-gray-50 dark:via-gray-900 to-transparent pl-4">
+                      <button
+                        onClick={(e) => startEditing(e, conv)}
+                        className="p-1.5 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
+                        title="Rename chat"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={(e) => handleDelete(e, conv.id)}
+                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
+                        title="Delete chat"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             ))}
           </div>
@@ -149,9 +240,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
       
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-800 text-xs text-gray-400 text-center">
+      <div className="pt-4 border-t border-gray-200 dark:border-gray-800 text-xs text-gray-400 text-center font-medium">
         ⚡ Powered by LangGraph
+      </div>
+
+      {/* Drag-to-resize handle */}
+      <div
+        onMouseDown={startResize}
+        className="absolute top-0 right-0 h-full w-1.5 cursor-col-resize group z-10"
+        title="Drag to resize"
+      >
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 h-12 w-1 rounded-full bg-gray-300 dark:bg-gray-600 opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
     </div>
   );
 };
+
+
