@@ -89,9 +89,7 @@ async def _refresh_zoom(db: AsyncSession, token_row: OAuthToken) -> OAuthToken:
     from app.auth.zoom_oauth import refresh_zoom_token
     from app.auth.google_oauth import compute_expiry
 
-    if not token_row.refresh_token:
-        raise ValueError("No refresh token stored for Zoom — user must re-authenticate")
-
+    # Zoom S2S OAuth doesn't use refresh tokens — we just fetch a new one.
     new_token_data = await refresh_zoom_token(token_row.refresh_token)
 
     token_row.access_token = new_token_data["access_token"]
