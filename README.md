@@ -1,6 +1,6 @@
 # Omni Copilot 🤖
 
-A production-ready unified AI assistant that connects to Google Drive, Gmail, Calendar, Slack, Notion, and Zoom via natural language.
+A production-ready unified AI assistant that connects to Google Drive, Docs, Gmail, Calendar, Slack, Notion, and Zoom via natural language.
 
 ## Features
 - **Multi-step Agent**: Powered by LangGraph to dynamically build plans and call multiple tools sequentially.
